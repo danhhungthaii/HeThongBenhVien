@@ -1,9 +1,10 @@
-# Backend API Spec
+# Week 1 Backend API Spec
 
-## Conventions
+## 1. Tổng Quan
 
-- Base URL: `/api`
-- Success response format:
+- Base URL: `http://localhost:3000/api`
+- Health check: `http://localhost:3000/health`
+- Format response chuẩn:
 
 ```json
 {
@@ -13,8 +14,6 @@
 }
 ```
 
-- Error response format:
-
 ```json
 {
   "success": false,
@@ -23,34 +22,154 @@
 }
 ```
 
-## Patient Module
+## 2. Quy Ước Chung
 
-### Data Model
+- `id` do backend sinh ra.
+- Các module dùng RESTful cơ bản: `GET`, `POST`, `PUT`, `DELETE`.
+- Queue là module nghiệp vụ nên có thêm endpoint thao tác riêng: `POST /next`, `PATCH /:id/complete`.
+- Dữ liệu hiện tại lưu tạm bằng in-memory repository, restart server sẽ mất dữ liệu.
+
+## 3. Module Patient
+
+### 3.1 DTO
+
+| Field | Type | Required | Ghi chú |
+|---|---|---:|---|
+| id | string | - | Backend sinh |
+| name | string | Yes | 2-100 ký tự |
+| phone | string | Yes | Chỉ số, `+`, `(`, `)`, `-`, khoảng trắng |
+| dateOfBirth | string | No | Định dạng `YYYY-MM-DD` |
+| gender | string | No | `male` / `female` / `other` |
+| address | string | No | Tối đa 255 ký tự |
+| status | string | No | `active` / `inactive` |
+
+### 3.2 Endpoints
+
+| Method | URL | Request Body | Response mẫu | Status |
+|---|---|---|---|---|
+| GET | `/api/patients` | - | `[{ "id": "p1", "name": "Nguyen Van A" }]` | 200 |
+| GET | `/api/patients/:id` | - | `{ "id": "p1", "name": "Nguyen Van A" }` | 200, 404 |
+| POST | `/api/patients` | `{ "name": "Nguyen Van A", "phone": "0901234567", "dateOfBirth": "1990-01-01", "gender": "male", "address": "Hanoi", "status": "active" }` | `{ "id": "...", "name": "Nguyen Van A" }` | 201, 400 |
+| PUT | `/api/patients/:id` | `{ "name": "Nguyen Van B" }` | `{ "id": "p1", "name": "Nguyen Van B" }` | 200, 400, 404 |
+| DELETE | `/api/patients/:id` | - | `{ "success": true, "message": "Patient deleted successfully" }` | 200, 404 |
+
+### 3.3 Response Mẫu
 
 ```json
 {
-  "id": "string",
-  "name": "string",
-  "phone": "string",
-  "dateOfBirth": "YYYY-MM-DD optional",
-  "gender": "male | female | other | optional",
-  "address": "string optional",
-  "status": "active | inactive"
+  "success": true,
+  "message": "Patients fetched successfully",
+  "data": [
+    {
+      "id": "p1",
+      "name": "Nguyen Van A",
+      "phone": "0901234567",
+      "dateOfBirth": "1990-01-01",
+      "gender": "male",
+      "address": "Hanoi",
+      "status": "active"
+    }
+  ]
 }
 ```
 
-### Endpoints
+## 4. Module Appointment
 
-#### GET /api/patients
-List all patients.
+### 4.1 DTO
 
-#### GET /api/patients/:id
-Get patient detail by id.
+| Field | Type | Required | Ghi chú |
+|---|---|---:|---|
+| id | string | - | Backend sinh |
+| patientId | string | Yes | Mã bệnh nhân |
+| doctorId | string | Yes | Mã bác sĩ |
+| appointmentDate | string | Yes | `YYYY-MM-DD` |
+| appointmentTime | string | No | `HH:mm` |
+| reason | string | No | Lý do khám |
+| status | string | No | `scheduled` / `completed` / `cancelled` / `no_show` |
 
-#### POST /api/patients
-Create a patient.
+### 4.2 Endpoints
 
-Request body:
+| Method | URL | Request Body | Response mẫu | Status |
+|---|---|---|---|---|
+| GET | `/api/appointments` | - | `[]` | 200 |
+| GET | `/api/appointments/:id` | - | `{ "id": "a1", "patientId": "p1" }` | 200, 404 |
+| POST | `/api/appointments` | `{ "patientId": "p1", "doctorId": "d1", "appointmentDate": "2026-04-28", "appointmentTime": "09:30", "reason": "Kham tong quat", "status": "scheduled" }` | `{ "id": "a1", "patientId": "p1" }` | 201, 400 |
+| PUT | `/api/appointments/:id` | `{ "status": "completed" }` | `{ "id": "a1", "status": "completed" }` | 200, 400, 404 |
+| DELETE | `/api/appointments/:id` | - | `{ "success": true, "message": "Appointment deleted successfully" }` | 200, 404 |
+
+### 4.3 Response Mẫu
+
+```json
+{
+  "success": true,
+  "message": "Appointment created successfully",
+  "data": {
+    "id": "a1",
+    "patientId": "p1",
+    "doctorId": "d1",
+    "appointmentDate": "2026-04-28",
+    "appointmentTime": "09:30",
+    "reason": "Kham tong quat",
+    "status": "scheduled"
+  }
+}
+```
+
+## 5. Module Queue
+
+### 5.1 DTO
+
+| Field | Type | Required | Ghi chú |
+|---|---|---:|---|
+| id | string | - | Backend sinh |
+| patientId | string | Yes | Mã bệnh nhân |
+| queueNumber | number | Yes | Số thứ tự |
+| status | string | No | `waiting` / `serving` / `done` / `cancelled` |
+| createdAt | string | Yes | ISO datetime |
+
+### 5.2 Endpoints
+
+| Method | URL | Request Body | Response mẫu | Status |
+|---|---|---|---|---|
+| GET | `/api/queues` | - | `[]` | 200 |
+| GET | `/api/queues/:id` | - | `{ "id": "q1", "queueNumber": 1 }` | 200, 404 |
+| POST | `/api/queues` | `{ "patientId": "p1" }` | `{ "id": "q1", "patientId": "p1", "queueNumber": 1, "status": "waiting" }` | 201, 400 |
+| POST | `/api/queues/next` | - | `{ "id": "q1", "status": "serving" }` | 200, 404 |
+| PATCH | `/api/queues/:id/complete` | - | `{ "id": "q1", "status": "done" }` | 200, 404 |
+
+### 5.3 Endpoint Đề Xuất Thêm Cho Queue
+
+| Method | URL | Mục đích |
+|---|---|---|
+| GET | `/api/queues?status=waiting` | Lấy danh sách đang chờ |
+| GET | `/api/queues?status=serving` | Lấy danh sách đang được gọi |
+| POST | `/api/queues/:id/cancel` | Hủy số thứ tự |
+
+## 6. Các Endpoint Hiện Tại Có Test Bằng Postman
+
+Có. Hiện tại project đã có thể test ngay bằng Postman cho các route sau:
+
+- `GET /health`
+- `GET /api/patients`
+- `POST /api/patients`
+- `GET /api/appointments`
+- `POST /api/appointments`
+- `GET /api/queues`
+- `POST /api/queues`
+- `POST /api/queues/next`
+- `PATCH /api/queues/:id/complete`
+
+## 7. Cách Test Nhanh Bằng Postman
+
+1. Chạy backend: `npm run dev`
+2. Tạo request `GET http://localhost:3000/health`
+3. Tạo request `POST http://localhost:3000/api/patients` với body `raw / JSON`
+4. Tạo request `POST http://localhost:3000/api/appointments` với body `raw / JSON`
+5. Tạo request `POST http://localhost:3000/api/queues` với body `raw / JSON`
+6. Gọi `POST http://localhost:3000/api/queues/next`
+7. Gọi `PATCH http://localhost:3000/api/queues/:id/complete`
+
+### Body mẫu cho Postman
 
 ```json
 {
@@ -63,59 +182,10 @@ Request body:
 }
 ```
 
-#### PUT /api/patients/:id
-Update patient by id.
-
-#### DELETE /api/patients/:id
-Delete patient by id.
-
-## Appointment Module
-
-### Data Model
-
 ```json
 {
-  "id": "string",
-  "patientId": "string",
-  "doctorId": "string",
-  "appointmentDate": "YYYY-MM-DD",
-  "appointmentTime": "HH:mm optional",
-  "reason": "string optional",
-  "status": "scheduled | completed | cancelled | no_show"
-}
-```
-
-### Endpoints
-
-#### GET /api/appointments
-Response 200:
-
-```json
-{
-  "success": true,
-  "message": "Appointments fetched successfully",
-  "data": []
-}
-```
-
-#### GET /api/appointments/:id
-Response 200:
-
-```json
-{
-  "success": true,
-  "message": "Appointment fetched successfully",
-  "data": {}
-}
-```
-
-#### POST /api/appointments
-Request body:
-
-```json
-{
-  "patientId": "patient-001",
-  "doctorId": "doctor-001",
+  "patientId": "p1",
+  "doctorId": "d1",
   "appointmentDate": "2026-04-28",
   "appointmentTime": "09:30",
   "reason": "Kham tong quat",
@@ -123,94 +193,23 @@ Request body:
 }
 ```
 
-Response 201:
-
 ```json
 {
-  "success": true,
-  "message": "Appointment created successfully",
-  "data": {}
+  "patientId": "p1"
 }
 ```
 
-#### PUT /api/appointments/:id
-Request body: same fields as POST, all fields optional for partial update.
+## 8. Gợi Ý Trình Bày Trong Báo Cáo Cuối Tuần
 
-#### DELETE /api/appointments/:id
-Response 200 with success message.
-
-## Queue Module
-
-### Data Model
-
-```json
-{
-  "id": "string",
-  "patientId": "string",
-  "queueNumber": "number",
-  "status": "waiting | serving | done | cancelled",
-  "createdAt": "ISO string"
-}
-```
-
-### Endpoints
-
-#### GET /api/queues
-List all queue tickets.
-
-#### GET /api/queues/:id
-Get one queue ticket by id.
-
-#### POST /api/queues
-Take a queue number.
-
-Request body:
-
-```json
-{
-  "patientId": "patient-001"
-}
-```
-
-Response 201:
-
-```json
-{
-  "success": true,
-  "message": "Queue created successfully",
-  "data": {}
-}
-```
-
-#### POST /api/queues/next
-Call the next waiting patient.
-
-Response 200:
-
-```json
-{
-  "success": true,
-  "message": "Next patient called successfully",
-  "data": {}
-}
-```
-
-#### PATCH /api/queues/:id/complete
-Mark a queue ticket as done.
-
-Response 200:
-
-```json
-{
-  "success": true,
-  "message": "Queue marked as done successfully",
-  "data": {}
-}
-```
-
-## Notes For BA and FE
-
-- `id` is generated by backend.
-- DTO validation is already in place.
-- Repositories are in-memory for now, so data resets when the server restarts.
-- The current structure is ready to switch to database repositories later without changing controllers.
+- Mục tiêu tuần 1: dựng backend nền tảng và chuẩn hóa API spec.
+- Kết quả đã làm:
+  - Tạo cấu trúc clean architecture
+  - Hoàn thiện DTO + validation
+  - Có logging và global error handling
+  - Chuẩn hóa endpoint Patient, Appointment, Queue
+  - Có spec để BA/FE xác nhận
+- Trạng thái hiện tại: endpoint có thể test bằng Postman, chưa cần business logic phức tạp.
+- Hướng phát triển tuần sau:
+  - Kết nối database
+  - Thêm Doctor, Billing, MedicalRecord
+  - Viết OpenAPI/Swagger nếu cần
