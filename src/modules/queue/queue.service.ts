@@ -55,6 +55,10 @@ export class QueueService {
       throw new AppError('Queue not found', 404);
     }
 
+    if (queue.status !== 'serving') {
+      throw new AppError('Queue must be serving before completing', 409);
+    }
+
     const updated = await queueRepository.update(id, { status: 'done' });
 
     if (!updated) {

@@ -7,6 +7,7 @@ const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
 export const patientSchema = z.object({
   id: z.string().min(1),
+  pid: z.string().min(1),
   name: z.string().min(2, 'Name must contain at least 2 characters').max(100, 'Name is too long'),
   phone: z
     .string()
@@ -17,9 +18,10 @@ export const patientSchema = z.object({
   gender: z.enum(patientGenderValues).optional(),
   address: z.string().max(255, 'Address is too long').optional(),
   status: z.enum(patientStatusValues).default('active'),
+  deletedAt: z.string().datetime().optional(),
 });
 
-export const createPatientSchema = patientSchema.omit({ id: true });
+export const createPatientSchema = patientSchema.omit({ id: true, pid: true, deletedAt: true });
 export const updatePatientSchema = createPatientSchema
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
