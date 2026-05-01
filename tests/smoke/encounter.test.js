@@ -33,7 +33,7 @@ describe('Encounter API — Smoke Test', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.data).toHaveProperty('encounter_id');
-      expect(res.body.data).toHaveProperty('status', 'in_progress');
+      expect(res.body.data).toHaveProperty('status', 'waiting');
     });
 
     it('❌ tạo encounter thất bại — thiếu patient_id', async () => {
@@ -167,12 +167,44 @@ describe('Encounter API — Smoke Test', () => {
 
       const encounterId = res.body.data.encounter_id;
 
+      await request(app)
+        .put(`${API_PREFIX}/encounters/${encounterId}/diagnosis`)
+        .send({
+          icd10_code: 'J06.9',
+          description: 'Nhiễm trùng hô hấp cấp trên',
+          type: 'primary',
+        })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Content-Type', 'application/json');
+
       const closeRes = await request(app)
         .put(`${API_PREFIX}/encounters/${encounterId}/close`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(closeRes.status).toBe(200);
       expect(closeRes.body.data).toHaveProperty('status', 'completed');
+    });
+
+    it('❌ không cho đóng encounter khi thiếu ICD-10 chính', async () => {
+      const res = await request(app)
+        .post(`${API_PREFIX}/encounters`)
+        .send({
+          patient_id: 'BV-20260427-0002',
+          doctor_id: 2,
+          department_id: 2,
+          visit_type: 'outpatient',
+          chief_complaint: 'Khám định kỳ',
+        })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Content-Type', 'application/json');
+
+      const encounterId = res.body.data.encounter_id;
+
+      const closeRes = await request(app)
+        .put(`${API_PREFIX}/encounters/${encounterId}/close`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(closeRes.status).toBe(400);
     });
   });
 });

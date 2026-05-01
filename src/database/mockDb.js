@@ -22,6 +22,8 @@ let counters = {
   encounter: 0,
   clinicalOrder: 0,
   prescription: 0,
+  progressNote: 0,
+  drug: 0,
   department: 0,
   service: 0,
   icd10: 0,
@@ -52,6 +54,7 @@ const db = {
   encounters: [],
   clinicalOrders: [],
   prescriptions: [],
+  drugs: [],
   progressNotes: [],
   notifications: [],
 };
@@ -180,6 +183,18 @@ function seedData() {
   ];
   services.forEach(s => {
     db.services.push({ service_id: ++counters.service, ...s, is_active: true, created_at: new Date() });
+  });
+
+  // Drugs catalog (sample for M2 rules)
+  const drugs = [
+    { drug_name: 'Paracetamol 500mg', active_ingredient: 'Paracetamol', is_bhyt: true, current_stock: 120 },
+    { drug_name: 'Amoxicillin 500mg', active_ingredient: 'Amoxicillin', is_bhyt: true, current_stock: 80 },
+    { drug_name: 'Cefixime 200mg', active_ingredient: 'Cefixime', is_bhyt: false, current_stock: 40 },
+    { drug_name: 'Cetirizine 10mg', active_ingredient: 'Cetirizine', is_bhyt: true, current_stock: 60 },
+    { drug_name: 'Ibuprofen 400mg', active_ingredient: 'Ibuprofen', is_bhyt: false, current_stock: 25 },
+  ];
+  drugs.forEach(d => {
+    db.drugs.push({ drug_id: ++counters.drug, ...d, is_active: true, created_at: new Date() });
   });
 
   // ICD-10 Codes (sample)
