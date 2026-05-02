@@ -1,33 +1,46 @@
 const { ZodError } = require('zod');
 
 const { AppError } = require('../errors/AppError');
-const { logger } = require('../logger/logger');
+const { logger } = require('../helpers/logger');
 
 function errorHandler(err, req, res, _next) {
+  let statusCode = 500;
+  let message = 'Internal server error';
+  let code = 'INTERNAL_ERROR';
+  let details = err.details || null;
+
   if (err instanceof ZodError) {
-    res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      details: err.flatten(),
-    });
-    return;
+    statusCode = 400;
+    message = 'Validation failed';
+    code = 'VALIDATION_ERROR';
+    details = err.flatten();
+  } else if (err instanceof AppError) {
+    statusCode = err.statusCode;
+    message = err.message;
+    // Map status codes to conventional codes
+    if (statusCode === 400) code = 'VALIDATION_ERROR';
+    else if (statusCode === 401) code = 'UNAUTHORIZED';
+    else if (statusCode === 403) code = 'FORBIDDEN';
+    else if (statusCode === 404) code = 'NOT_FOUND';
+    else if (statusCode === 409) code = 'CONFLICT';
   }
 
-  const appError = err instanceof AppError ? err : new AppError('Internal server error', 500);
-
-  logger.error('Request failed', {
+  logger.error(message, {
     method: req.method,
     path: req.originalUrl,
-    statusCode: appError.statusCode,
-    message: appError.message,
-    details: appError.details,
-    stack: err instanceof Error ? err.stack : undefined,
+    statusCode,
+    code,
+    details,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 
-  res.status(appError.statusCode).json({
+  res.status(statusCode).json({
     success: false,
-    message: appError.message,
-    details: appError.details,
+    error: {
+      code,
+      message,
+      ...(details && { details }),
+    },
   });
 }
 

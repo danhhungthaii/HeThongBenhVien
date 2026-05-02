@@ -1,6 +1,6 @@
 'use strict';
-const configService = require('../services/systemConfig.service');
-const { successResponse } = require('../../../common/helpers/responseHelper');
+const configService = require('./systemConfig.service');
+const { successResponse } = require('../../common/helpers/responseHelper');
 
 async function getAll(req, res) {
   const configs = await configService.getSystemConfigs();

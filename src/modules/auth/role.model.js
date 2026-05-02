@@ -1,5 +1,5 @@
 'use strict';
-const db = require('../../../config/database');
+const db = require('../../config/database');
 
 async function findRoleByName(roleName) {
   return db.findOne('roles', r => r.role_name === roleName);

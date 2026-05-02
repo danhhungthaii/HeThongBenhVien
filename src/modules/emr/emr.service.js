@@ -1,5 +1,5 @@
 'use strict';
-const db = require('../../../config/database');
+const db = require('../../config/database');
 
 async function getPatientHistory(patientId) {
   const encounters = db.findMany('encounters', e => e.patient_id === patientId)

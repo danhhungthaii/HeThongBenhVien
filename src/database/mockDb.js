@@ -109,7 +109,7 @@ function seedData() {
   db.users.push({
     user_id: ++counters.user,
     username: 'admin',
-    password_hash: '$2a$12$qO2R6ElZYi16hdorjCdAtuXzGo9Iup5yQX8Pf1oCbFY6DEYQzSrXS', // admin123
+    password_hash: '$2b$10$cpsQjiaQ5Ab7FjfTA9Okje/M4kA9fgfSleBm7jyuuphQuyMf1pM/m', // admin123
     email: 'admin@hospital.vn',
     role: 'Admin',
     staff_id: null,
@@ -125,7 +125,7 @@ function seedData() {
   db.users.push({
     user_id: ++counters.user,
     username: 'doctor01',
-    password_hash: '$2a$12$T87rmtPGSFfhyYkWAa6YS.1x/slg91Zo2pSFjOHr/YAerRvcM0LX6', // doctor123
+    password_hash: '$2b$10$eA3l.ucfZiSMBF5/A7fuAuEbt9D6VTWzhzK2dvtUcDeVplVJav5HK', // doctor123
     email: 'doctor01@hospital.vn',
     role: 'Doctor',
     staff_id: null,
@@ -141,7 +141,7 @@ function seedData() {
   db.users.push({
     user_id: ++counters.user,
     username: 'receptionist01',
-    password_hash: '$2a$12$15wxLggqqh2xBwW05APrruCLIrHImcxX0T.kkpH0VO.oU1WkMCJq.', // receptionist123
+    password_hash: '$2b$10$/tfIkyEck7AWlsw0RmJPN.PNgNwMPP7XAP1qzj6KddtazzPJOcOdm', // receptionist123
     email: 'receptionist@hospital.vn',
     role: 'Receptionist',
     staff_id: null,

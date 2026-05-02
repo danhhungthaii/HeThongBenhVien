@@ -1,6 +1,6 @@
 'use strict';
-const auditService = require('../services/audit.service');
-const { successResponse } = require('../../../common/helpers/responseHelper');
+const auditService = require('./audit.service');
+const { successResponse } = require('../../common/helpers/responseHelper');
 
 async function getAuditLogs(req, res) {
   const logs = await auditService.getAuditLogs(req.query);

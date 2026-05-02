@@ -1,6 +1,6 @@
 'use strict';
-const db = require('../../../config/database');
-const userModel = require('../../auth/models/user.model');
+const db = require('../../config/database');
+const userModel = require('../auth/user.model');
 
 async function getRoles() {
   const roles = db.findAll('roles');

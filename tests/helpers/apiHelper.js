@@ -20,7 +20,7 @@ function getBaseUrl() {
 const BASE_URL = getBaseUrl();
 
 async function api(method, endpoint, body, token) {
-  const { app } = require('../src/app');
+  const app = require('../src/app');
   let req = request(app)[method](`${API_PREFIX}${endpoint}`);
   if (token) req = req.set('Authorization', `Bearer ${token}`);
   if (body) req = req.send(body);
@@ -28,7 +28,7 @@ async function api(method, endpoint, body, token) {
 }
 
 async function loginAsAdmin() {
-  const { app } = require('../src/app');
+  const app = require('../src/app');
   const res = await request(app)
     .post(`${API_PREFIX}/auth/login`)
     .send({ username: 'admin', password: 'admin123' })
@@ -37,7 +37,7 @@ async function loginAsAdmin() {
 }
 
 async function loginAsDoctor() {
-  const { app } = require('../src/app');
+  const app = require('../src/app');
   const res = await request(app)
     .post(`${API_PREFIX}/auth/login`)
     .send({ username: 'doctor01', password: 'doctor123' })

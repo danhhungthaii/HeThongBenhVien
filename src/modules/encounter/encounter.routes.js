@@ -1,10 +1,10 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/encounter.controller');
-const { asyncHandler } = require('../../../common/middlewares/asyncHandler');
-const { validate } = require('../../../common/middlewares/validate');
-const { auth } = require('../../../common/middlewares/auth');
+const controller = require('./encounter.controller');
+const { asyncHandler } = require('../../common/middlewares/asyncHandler');
+const { validate } = require('../../common/middlewares/validate');
+const { auth } = require('../../common/middlewares/auth');
 
 const createSchema = {
 	patient_id: { required: true, type: 'string' },

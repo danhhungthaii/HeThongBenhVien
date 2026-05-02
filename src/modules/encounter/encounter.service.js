@@ -1,6 +1,6 @@
 'use strict';
-const db = require('../../../config/database');
-const { ValidationError, ConflictError } = require('../../../common/errors/AppError');
+const db = require('../../config/database');
+const { ValidationError, ConflictError } = require('../../common/errors/AppError');
 
 async function getEncounters(filters = {}) {
   let items = db.findAll('encounters');

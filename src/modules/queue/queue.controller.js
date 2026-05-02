@@ -1,7 +1,7 @@
 'use strict';
-const queueService = require('../services/queue.service');
-const { ValidationError } = require('../../../common/errors/AppError');
-const { successResponse } = require('../../../common/helpers/responseHelper');
+const queueService = require('./queue.service');
+const { ValidationError } = require('../../common/errors/AppError');
+const { successResponse } = require('../../common/helpers/responseHelper');
 
 async function listTickets(req, res) {
   const items = await queueService.getTickets(req.query);

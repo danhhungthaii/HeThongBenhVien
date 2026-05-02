@@ -1,4 +1,4 @@
-const { logger } = require('../logger/logger');
+const { logger } = require('../helpers/logger');
 
 function requestLogger(req, res, next) {
   const startedAt = process.hrtime.bigint();

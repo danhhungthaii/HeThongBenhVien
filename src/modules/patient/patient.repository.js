@@ -1,4 +1,4 @@
-const { env } = require('../../common/config/env');
+const { env } = require('../../config/env');
 const { InMemoryPatientRepository } = require('../../common/repositories/implementations/in-memory-patient.repository');
 const { SqlPatientRepository } = require('../../common/repositories/implementations/sql-patient.repository');
 

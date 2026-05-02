@@ -1,7 +1,7 @@
 'use strict';
-const patientService = require('../services/patient.service');
-const { NotFoundError } = require('../../../common/errors/AppError');
-const { successResponse } = require('../../../common/helpers/responseHelper');
+const patientService = require('./patient.service');
+const { NotFoundError } = require('../../common/errors/AppError');
+const { successResponse } = require('../../common/helpers/responseHelper');
 
 async function listPatients(req, res) {
   const items = await patientService.getPatients(req.query);

@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { app } = require('../src/app');
+const app = require('../src/app');
 
 const TEST_PORT = 3001;
 const PORT_FILE = path.join(__dirname, '.test-port.json');

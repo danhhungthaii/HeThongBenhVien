@@ -1,12 +1,12 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/auth.controller');
-const { asyncHandler } = require('../../../common/middlewares/asyncHandler');
-const { validate } = require('../../../common/middlewares/validate');
-const authValidator = require('../validators/auth.validator');
-const { rateLimiter } = require('../../../common/middlewares/rateLimiter');
-const { auth } = require('../../../common/middlewares/auth');
+const authController = require('./auth.controller');
+const { asyncHandler } = require('../../common/middlewares/asyncHandler');
+const { validate } = require('../../common/middlewares/validate');
+const authValidator = require('./auth.validator');
+const { rateLimiter } = require('../../common/middlewares/rateLimiter');
+const { auth } = require('../../common/middlewares/auth');
 
 router.post('/login', rateLimiter({ windowMs: 15 * 60 * 1000, max: 10 }), validate(authValidator.loginSchema), asyncHandler(authController.login));
 router.post('/logout', auth, asyncHandler(authController.logout));

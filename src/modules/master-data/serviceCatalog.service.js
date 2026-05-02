@@ -1,5 +1,5 @@
 'use strict';
-const db = require('../../../config/database');
+const db = require('../../config/database');
 
 async function getServices(filters = {}) {
   let items = db.findAll('services');

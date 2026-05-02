@@ -1,6 +1,6 @@
 'use strict';
-const db = require('../../../config/database');
-const cache = require('../../../services/cache.service');
+const db = require('../../config/database');
+const cache = require('../../common/services/cache.service');
 
 async function getDepartments(filters = {}) {
   let items = db.findAll('departments');

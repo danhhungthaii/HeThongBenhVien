@@ -1,9 +1,9 @@
 'use strict';
-const departmentService = require('../services/department.service');
-const serviceCatalogService = require('../services/serviceCatalog.service');
-const icd10Service = require('../services/icd10.service');
-const doctorService = require('../services/doctor.service');
-const { successResponse } = require('../../../common/helpers/responseHelper');
+const departmentService = require('./department.service');
+const serviceCatalogService = require('./serviceCatalog.service');
+const icd10Service = require('./icd10.service');
+const doctorService = require('./doctor.service');
+const { successResponse } = require('../../common/helpers/responseHelper');
 
 async function listDepartments(req, res) {
   const items = await departmentService.getDepartments(req.query);

@@ -1,5 +1,5 @@
 'use strict';
-const db = require('../../../config/database');
+const db = require('../../config/database');
 
 async function logAudit({ userId, action, resource, resourceId, oldValue, newValue, req }) {
   const entry = {

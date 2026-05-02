@@ -1,7 +1,7 @@
 'use strict';
-const rbacService = require('../services/rbac.service');
-const { successResponse } = require('../../../common/helpers/responseHelper');
-const { auth } = require('../../../common/middlewares/auth');
+const rbacService = require('./rbac.service');
+const { successResponse } = require('../../common/helpers/responseHelper');
+const { auth } = require('../../common/middlewares/auth');
 
 async function getRoles(req, res) {
   const roles = await rbacService.getRoles();

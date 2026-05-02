@@ -1,6 +1,6 @@
 'use strict';
-const db = require('../../../config/database');
-const { QUEUE_STATUS, QUEUE_PRIORITY } = require('../../../common/constants');
+const db = require('../../config/database');
+const { QUEUE_STATUS, QUEUE_PRIORITY } = require('../../common/constants');
 
 async function getTickets(filters = {}) {
   let items = db.findAll('queueTickets');

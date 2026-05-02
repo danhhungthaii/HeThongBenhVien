@@ -1,6 +1,6 @@
 'use strict';
-const authService = require('../services/auth.service');
-const { successResponse } = require('../../../common/helpers/responseHelper');
+const authService = require('./auth.service');
+const { successResponse } = require('../../common/helpers/responseHelper');
 
 async function login(req, res) {
   const result = await authService.login(req.body.username, req.body.password);

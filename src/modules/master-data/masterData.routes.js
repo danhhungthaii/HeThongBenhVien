@@ -1,10 +1,10 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/masterData.controller');
-const { asyncHandler } = require('../../../common/middlewares/asyncHandler');
-const { validate } = require('../../../common/middlewares/validate');
-const { auth } = require('../../../common/middlewares/auth');
+const controller = require('./masterData.controller');
+const { asyncHandler } = require('../../common/middlewares/asyncHandler');
+const { validate } = require('../../common/middlewares/validate');
+const { auth } = require('../../common/middlewares/auth');
 
 const deptSchema = { department_name: { required: true, type: 'string' } };
 const serviceSchema = { service_name: { required: true, type: 'string' }, service_code: { required: true, type: 'string' } };

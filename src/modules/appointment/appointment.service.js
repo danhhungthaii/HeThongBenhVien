@@ -1,6 +1,6 @@
 'use strict';
-const db = require('../../../config/database');
-const { APPOINTMENT_STATUS } = require('../../../common/constants');
+const db = require('../../config/database');
+const { APPOINTMENT_STATUS } = require('../../common/constants');
 
 async function getAppointments(filters = {}) {
   let items = db.findAll('appointments');

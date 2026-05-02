@@ -1,7 +1,7 @@
 'use strict';
-const emrService = require('../services/emr.service');
-const { NotFoundError } = require('../../../common/errors/AppError');
-const { successResponse } = require('../../../common/helpers/responseHelper');
+const emrService = require('./emr.service');
+const { NotFoundError } = require('../../common/errors/AppError');
+const { successResponse } = require('../../common/helpers/responseHelper');
 
 async function getHistory(req, res) {
   const history = await emrService.getPatientHistory(req.params.id);

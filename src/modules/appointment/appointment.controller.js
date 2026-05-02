@@ -1,7 +1,7 @@
 'use strict';
-const appointmentService = require('../services/appointment.service');
-const { NotFoundError, ValidationError } = require('../../../common/errors/AppError');
-const { successResponse } = require('../../../common/helpers/responseHelper');
+const appointmentService = require('./appointment.service');
+const { NotFoundError, ValidationError } = require('../../common/errors/AppError');
+const { successResponse } = require('../../common/helpers/responseHelper');
 
 async function listAppointments(req, res) {
   const items = await appointmentService.getAppointments(req.query);

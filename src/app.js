@@ -1,9 +1,9 @@
 const cors = require('cors');
 const express = require('express');
 
-const { errorHandler } = require('./common/middleware/errorHandler');
-const { notFound } = require('./common/middleware/notFound');
-const { requestLogger } = require('./common/middleware/requestLogger');
+const { errorHandler } = require('./common/middlewares/errorHandler');
+const { notFound } = require('./common/middlewares/notFound');
+const { requestLogger } = require('./common/middlewares/requestLogger');
 const apiRouter = require('./routes');
 
 const app = express();
@@ -13,10 +13,10 @@ app.use(express.json());
 app.use(requestLogger);
 
 app.get('/health', (_req, res) => {
-  res.json({ success: true, message: 'OK' });
+  res.json({ status: 'ok', success: true, message: 'OK' });
 });
 
-app.use('/api', apiRouter);
+app.use('/api/v1', apiRouter);
 app.use(notFound);
 app.use(errorHandler);
 

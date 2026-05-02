@@ -1,8 +1,8 @@
 'use strict';
-const userModel = require('../models/user.model');
+const userModel = require('./user.model');
 const tokenService = require('./token.service');
-const { UnauthorizedError, ValidationError } = require('../../../common/errors/AppError');
-const { MAX_LOGIN_ATTEMPTS, ACCOUNT_LOCKOUT_DURATION_MS } = require('../../../common/constants');
+const { UnauthorizedError, ValidationError } = require('../../common/errors/AppError');
+const { MAX_LOGIN_ATTEMPTS, ACCOUNT_LOCKOUT_DURATION_MS } = require('../../common/constants');
 
 async function login(username, password) {
   const user = await userModel.findUserByUsername(username);

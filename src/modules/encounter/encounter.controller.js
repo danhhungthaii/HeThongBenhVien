@@ -1,8 +1,8 @@
 'use strict';
-const encounterService = require('../services/encounter.service');
-const auditService = require('../../audit/services/audit.service');
-const { NotFoundError, ValidationError } = require('../../../common/errors/AppError');
-const { successResponse } = require('../../../common/helpers/responseHelper');
+const encounterService = require('./encounter.service');
+const auditService = require('../audit/audit.service');
+const { NotFoundError, ValidationError } = require('../../common/errors/AppError');
+const { successResponse } = require('../../common/helpers/responseHelper');
 
 function validatePrescriptionPayload(payload) {
   if (!payload || !Array.isArray(payload.items) || payload.items.length === 0) {
