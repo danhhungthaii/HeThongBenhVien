@@ -1,32 +1,44 @@
-const { appointmentService } = require('./appointment.service');
+'use strict';
+const appointmentService = require('../services/appointment.service');
+const { NotFoundError, ValidationError } = require('../../../common/errors/AppError');
+const { successResponse } = require('../../../common/helpers/responseHelper');
 
-class AppointmentController {
-  async list(_req, res) {
-    const appointments = await appointmentService.list();
-    res.json({ success: true, message: 'Appointments fetched successfully', data: appointments });
-  }
-
-  async getById(req, res) {
-    const appointment = await appointmentService.getById(req.params.id);
-    res.json({ success: true, message: 'Appointment fetched successfully', data: appointment });
-  }
-
-  async create(req, res) {
-    const appointment = await appointmentService.create(req.body);
-    res.status(201).json({ success: true, message: 'Appointment created successfully', data: appointment });
-  }
-
-  async update(req, res) {
-    const appointment = await appointmentService.update(req.params.id, req.body);
-    res.json({ success: true, message: 'Appointment updated successfully', data: appointment });
-  }
-
-  async delete(req, res) {
-    await appointmentService.delete(req.params.id);
-    res.json({ success: true, message: 'Appointment deleted successfully' });
-  }
+async function listAppointments(req, res) {
+  const items = await appointmentService.getAppointments(req.query);
+  res.status(200).json(successResponse(items));
 }
 
-const appointmentController = new AppointmentController();
+async function getAppointment(req, res) {
+  const item = await appointmentService.getAppointmentById(req.params.id);
+  if (!item) throw new NotFoundError('Appointment');
+  res.status(200).json(successResponse(item));
+}
 
-module.exports = { AppointmentController, appointmentController };
+async function createAppointment(req, res) {
+  const result = await appointmentService.createAppointment(req.body);
+  if (result.conflict) {
+    throw new ValidationError(result.message);
+  }
+  res.status(201).json(successResponse(result));
+}
+
+async function updateAppointment(req, res) {
+  const item = await appointmentService.updateAppointment(req.params.id, req.body);
+  if (!item) throw new NotFoundError('Appointment');
+  res.status(200).json(successResponse(item));
+}
+
+async function cancelAppointment(req, res) {
+  const item = await appointmentService.cancelAppointment(req.params.id, req.body.reason);
+  if (!item) throw new NotFoundError('Appointment');
+  res.status(200).json(successResponse(item));
+}
+
+async function getAvailableSlots(req, res) {
+  const { doctor_id, date } = req.query;
+  if (!doctor_id || !date) throw new ValidationError('doctor_id and date are required');
+  const slots = await appointmentService.getAvailableSlots(doctor_id, date);
+  res.status(200).json(successResponse(slots));
+}
+
+module.exports = { listAppointments, getAppointment, createAppointment, updateAppointment, cancelAppointment, getAvailableSlots };

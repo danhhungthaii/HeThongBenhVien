@@ -1,32 +1,45 @@
-const { queueService } = require('./queue.service');
+'use strict';
+const queueService = require('../services/queue.service');
+const { ValidationError } = require('../../../common/errors/AppError');
+const { successResponse } = require('../../../common/helpers/responseHelper');
 
-class QueueController {
-  async list(_req, res) {
-    const queues = await queueService.list();
-    res.json({ success: true, message: 'Queues fetched successfully', data: queues });
-  }
-
-  async getById(req, res) {
-    const queue = await queueService.getById(req.params.id);
-    res.json({ success: true, message: 'Queue fetched successfully', data: queue });
-  }
-
-  async create(req, res) {
-    const queue = await queueService.create(req.body);
-    res.status(201).json({ success: true, message: 'Queue created successfully', data: queue });
-  }
-
-  async callNext(_req, res) {
-    const queue = await queueService.callNext();
-    res.json({ success: true, message: 'Next patient called successfully', data: queue });
-  }
-
-  async complete(req, res) {
-    const queue = await queueService.complete(req.params.id);
-    res.json({ success: true, message: 'Queue marked as done successfully', data: queue });
-  }
+async function listTickets(req, res) {
+  const items = await queueService.getTickets(req.query);
+  res.status(200).json(successResponse(items));
 }
 
-const queueController = new QueueController();
+async function createTicket(req, res) {
+  const ticket = await queueService.createTicket(req.body);
+  res.status(201).json(successResponse(ticket));
+}
 
-module.exports = { QueueController, queueController };
+async function callNext(req, res) {
+  const { department_id, doctor_id } = req.query;
+  if (!department_id) throw new ValidationError('department_id is required');
+  const ticket = await queueService.callNext(department_id, doctor_id);
+  if (!ticket) {
+    return res.status(200).json(successResponse({ message: 'No patients waiting' }));
+  }
+  res.status(200).json(successResponse(ticket));
+}
+
+async function completeTicket(req, res) {
+  const ticket = await queueService.completeTicket(req.params.id);
+  if (!ticket) throw new ValidationError('Ticket not found');
+  res.status(200).json(successResponse(ticket));
+}
+
+async function skipTicket(req, res) {
+  const ticket = await queueService.skipTicket(req.params.id);
+  if (!ticket) throw new ValidationError('Ticket not found');
+  res.status(200).json(successResponse(ticket));
+}
+
+async function getWaitingCount(req, res) {
+  const { department_id } = req.query;
+  if (!department_id) throw new ValidationError('department_id is required');
+  const count = await queueService.getWaitingCount(department_id);
+  res.status(200).json(successResponse({ waiting: count }));
+}
+
+module.exports = { listTickets, createTicket, callNext, completeTicket, skipTicket, getWaitingCount };

@@ -1,16 +1,15 @@
-const { Router } = require('express');
+'use strict';
+const express = require('express');
+const router = express.Router();
+const controller = require('../controllers/queue.controller');
+const { asyncHandler } = require('../../../common/middlewares/asyncHandler');
+const { auth } = require('../../../common/middlewares/auth');
 
-const { asyncHandler } = require('../../common/middleware/asyncHandler');
-const { validateBody } = require('../../common/validation/validateBody');
-const { queueController } = require('./queue.controller');
-const { createQueueSchema } = require('./queue.dto');
-
-const router = Router();
-
-router.get('/', asyncHandler(queueController.list.bind(queueController)));
-router.get('/:id', asyncHandler(queueController.getById.bind(queueController)));
-router.post('/', validateBody(createQueueSchema), asyncHandler(queueController.create.bind(queueController)));
-router.post('/next', asyncHandler(queueController.callNext.bind(queueController)));
-router.patch('/:id/complete', asyncHandler(queueController.complete.bind(queueController)));
+router.get('/', auth, asyncHandler(controller.listTickets));
+router.post('/', auth, asyncHandler(controller.createTicket));
+router.post('/call-next', auth, asyncHandler(controller.callNext));
+router.put('/:id/complete', auth, asyncHandler(controller.completeTicket));
+router.put('/:id/skip', auth, asyncHandler(controller.skipTicket));
+router.get('/waiting-count', auth, asyncHandler(controller.getWaitingCount));
 
 module.exports = router;

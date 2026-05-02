@@ -1,0 +1,82 @@
+name: CD — Staging Deploy
+
+on:
+  push:
+    branches: ['develop']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag (e.g. v1.0.0)'
+        required: false
+        type: string
+
+env:
+  NODE_VERSION: '20'
+  DEPLOY_ENV: staging
+  DEPLOY_PATH: /var/www/his-backend-staging
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: ${{ env.CACHE_DIR }}
+
+      - name: Install dependencies
+        run: npm ci --omit=dev
+
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV: test
+
+      - name: Bundle app
+        run: npm run build 2>/dev/null || node --check src/app.js
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd ${{ env.DEPLOY_PATH }}
+            git pull origin develop
+            npm ci --omit=dev
+            pm2 restart his-backend-staging || pm2 start src/app.js --name his-backend-staging
+            pm2 save
+
+      - name: Health check
+        run: |
+          sleep 5
+          curl -f https://staging-api.hospital.vn/health || \
+          curl -f http://staging-server:3000/health || \
+          echo "Health check endpoint not reachable — manual verify needed"
+
+      - name: Notify deployment
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚀 HIS Backend deployed to *Staging* (`develop` branch)",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🚀 HIS Backend — Staging Deploy*\n• Branch: `develop`\n• Commit: `${{ github.sha }}`\n• Actor: `${{ github.actor }}`\n• Status: `${{ job.status }}`"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

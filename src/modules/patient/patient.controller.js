@@ -1,32 +1,59 @@
-const { patientService } = require('./patient.service');
+'use strict';
+const patientService = require('../services/patient.service');
+const { NotFoundError } = require('../../../common/errors/AppError');
+const { successResponse } = require('../../../common/helpers/responseHelper');
 
-class PatientController {
-  async list(_req, res) {
-    const patients = await patientService.list();
-    res.json({ success: true, message: 'Patients fetched successfully', data: patients });
-  }
-
-  async getById(req, res) {
-    const patient = await patientService.getById(req.params.id);
-    res.json({ success: true, message: 'Patient fetched successfully', data: patient });
-  }
-
-  async create(req, res) {
-    const patient = await patientService.create(req.body);
-    res.status(201).json({ success: true, message: 'Patient created successfully', data: patient });
-  }
-
-  async update(req, res) {
-    const patient = await patientService.update(req.params.id, req.body);
-    res.json({ success: true, message: 'Patient updated successfully', data: patient });
-  }
-
-  async delete(req, res) {
-    await patientService.delete(req.params.id);
-    res.json({ success: true, message: 'Patient deleted successfully' });
-  }
+async function listPatients(req, res) {
+  const items = await patientService.getPatients(req.query);
+  res.status(200).json(successResponse(items));
 }
 
-const patientController = new PatientController();
+async function getPatient(req, res) {
+  const patient = await patientService.getPatientById(req.params.id);
+  if (!patient) throw new NotFoundError('Patient');
+  res.status(200).json(successResponse(patient));
+}
 
-module.exports = { PatientController, patientController };
+async function createPatient(req, res) {
+  if (req.body.phone || req.body.cccd) {
+    const duplicates = await patientService.findDuplicates(req.body);
+    if (duplicates.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'DUPLICATE_DETECTED',
+          message: 'Possible duplicate patient records found',
+          details: duplicates,
+        },
+      });
+    }
+  }
+  const patient = await patientService.createPatient(req.body);
+  res.status(201).json(successResponse(patient));
+}
+
+async function updatePatient(req, res) {
+  const patient = await patientService.updatePatient(req.params.id, req.body);
+  if (!patient) throw new NotFoundError('Patient');
+  res.status(200).json(successResponse(patient));
+}
+
+async function deletePatient(req, res) {
+  const patient = await patientService.getPatientById(req.params.id);
+  if (!patient) throw new NotFoundError('Patient');
+  await patientService.deletePatient(req.params.id);
+  res.status(200).json(successResponse({ message: 'Patient deactivated' }));
+}
+
+async function searchDuplicates(req, res) {
+  const duplicates = await patientService.findDuplicates(req.body);
+  res.status(200).json(successResponse(duplicates));
+}
+
+async function mergePatients(req, res) {
+  const { target_id, source_id } = req.body;
+  const merged = await patientService.mergePatients(target_id, source_id);
+  res.status(200).json(successResponse(merged));
+}
+
+module.exports = { listPatients, getPatient, createPatient, updatePatient, deletePatient, searchDuplicates, mergePatients };

@@ -1,16 +1,24 @@
-const { Router } = require('express');
+'use strict';
+const express = require('express');
+const router = express.Router();
+const controller = require('../controllers/appointment.controller');
+const { asyncHandler } = require('../../../common/middlewares/asyncHandler');
+const { validate } = require('../../../common/middlewares/validate');
+const { auth } = require('../../../common/middlewares/auth');
 
-const { asyncHandler } = require('../../common/middleware/asyncHandler');
-const { validateBody } = require('../../common/validation/validateBody');
-const { appointmentController } = require('./appointment.controller');
-const { createAppointmentSchema, updateAppointmentSchema } = require('./appointment.dto');
+const createSchema = {
+  patient_id: { required: true, type: 'string' },
+  doctor_id: { required: true, type: 'number' },
+  department_id: { required: false, type: 'number' },
+  appointment_date: { required: true, type: 'string' },
+  slot_time: { required: true, type: 'string' },
+};
 
-const router = Router();
-
-router.get('/', asyncHandler(appointmentController.list.bind(appointmentController)));
-router.get('/:id', asyncHandler(appointmentController.getById.bind(appointmentController)));
-router.post('/', validateBody(createAppointmentSchema), asyncHandler(appointmentController.create.bind(appointmentController)));
-router.put('/:id', validateBody(updateAppointmentSchema), asyncHandler(appointmentController.update.bind(appointmentController)));
-router.delete('/:id', asyncHandler(appointmentController.delete.bind(appointmentController)));
+router.get('/', auth, asyncHandler(controller.listAppointments));
+router.get('/available-slots', auth, asyncHandler(controller.getAvailableSlots));
+router.get('/:id', auth, asyncHandler(controller.getAppointment));
+router.post('/', auth, validate(createSchema), asyncHandler(controller.createAppointment));
+router.put('/:id', auth, asyncHandler(controller.updateAppointment));
+router.delete('/:id', auth, asyncHandler(controller.cancelAppointment));
 
 module.exports = router;
