@@ -1,0 +1,179 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - backend/cuong
+      - develop/MinhDung
+    paths:
+      - package.json
+      - package-lock.json
+      - src/**
+      - tests/**
+      - .eslintrc*
+      - jest.config.*
+      - prettier*
+      - .github/workflows/backend-ci.yml
+      - .github/workflows/backend-cd-staging.yml
+  pull_request:
+    branches:
+      - backend/cuong
+      - develop/MinhDung
+    paths:
+      - package.json
+      - package-lock.json
+      - src/**
+      - tests/**
+      - .eslintrc*
+      - jest.config.*
+      - prettier*
+      - .github/workflows/backend-ci.yml
+      - .github/workflows/backend-cd-staging.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint_and_test:
+    name: Lint and Unit Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Detect backend project directory
+        id: project
+        run: |
+          if [ -f package.json ]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          elif [ -f backend/package.json ]; then
+            echo "dir=backend" >> "$GITHUB_OUTPUT"
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Backend package.json not found at repo root or backend/. Skipping lint and test for bootstrap CI run."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.project.outputs.available == 'true'
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run ESLint
+        if: steps.project.outputs.available == 'true'
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: npm run lint
+
+      - name: Run unit tests
+        if: steps.project.outputs.available == 'true'
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: npm test -- --runInBand
+
+      - name: CI bootstrap summary
+        if: steps.project.outputs.available != 'true'
+        run: echo "Backend source not present in this branch, so CI completed as a bootstrap success."name: Backend CI
+
+on:
+  push:
+    branches:
+      - develop/MinhDung
+    paths:
+      - package.json
+      - package-lock.json
+      - src/**
+      - tests/**
+      - .eslintrc*
+      - jest.config.*
+      - prettier*
+      - .github/workflows/backend-ci.yml
+      - .github/workflows/backend-cd-staging.yml
+  pull_request:
+    branches:
+      - develop/MinhDung
+    paths:
+      - package.json
+      - package-lock.json
+      - src/**
+      - tests/**
+      - .eslintrc*
+      - jest.config.*
+      - prettier*
+      - .github/workflows/backend-ci.yml
+      - .github/workflows/backend-cd-staging.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint_and_test:
+    name: Lint and Unit Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Detect backend project directory
+        id: project
+        run: |
+          if [ -f package.json ]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          elif [ -f backend/package.json ]; then
+            echo "dir=backend" >> "$GITHUB_OUTPUT"
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Backend package.json not found at repo root or backend/. Skipping lint and test for bootstrap CI run."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.project.outputs.available == 'true'
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run ESLint
+        if: steps.project.outputs.available == 'true'
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: npm run lint
+
+      - name: Run unit tests
+        if: steps.project.outputs.available == 'true'
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: npm test -- --runInBand
+
+      - name: CI bootstrap summary
+        if: steps.project.outputs.available != 'true'
+        run: echo "Backend source not present in this branch, so CI completed as a bootstrap success."
