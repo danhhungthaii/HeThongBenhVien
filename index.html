@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hệ Thống Quản Lý Bệnh Viện</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app" id="appRoot">
+      <header class="app-header">
+        <div class="header-left">
+          <button class="icon-btn" id="sidebarToggle" aria-label="Toggle sidebar">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <div class="brand">
+            <div class="brand-icon">HIS</div>
+            <div>
+              <div class="brand-title">Hệ Thống Quản Lý Bệnh Viện</div>
+              <div class="brand-subtitle">Dashboard phòng khám</div>
+            </div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="shift-chip">
+            <span class="shift-label">Ca trực</span>
+            <strong class="shift-value">Sáng • 07:00 - 15:00</strong>
+          </div>
+          <button class="icon-btn notify" aria-label="Notifications">
+            <span class="dot"></span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M15 17H5l1.5-2v-4.5a5.5 5.5 0 0111 0V15L19 17h-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M9.5 17a2.5 2.5 0 005 0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+          <div class="user-chip" id="userChip">
+            <div class="avatar">DR</div>
+            <div>
+              <div class="user-name" id="userName">BS. Nguyễn Minh</div>
+              <div class="user-role" id="userRole">Bác sĩ đa khoa</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="app-body">
+        <aside class="sidebar" id="sidebar">
+          <nav class="sidebar-nav">
+            <a class="nav-item active" href="#">
+              <span class="nav-icon">⎈</span>
+              <span>Phòng khám</span>
+            </a>
+            <a class="nav-item" href="#">
+              <span class="nav-icon">👥</span>
+              <span>Quản lý bệnh nhân</span>
+            </a>
+            <a class="nav-item" href="#">
+              <span class="nav-icon">📄</span>
+              <span>Hồ sơ y tế</span>
+            </a>
+            <a class="nav-item" href="#">
+              <span class="nav-icon">⚙</span>
+              <span>Cài đặt</span>
+            </a>
+          </nav>
+          <div class="sidebar-footer">
+            <a class="nav-item" href="#" id="logoutBtn">
+              <span class="nav-icon">⎋</span>
+              <span>Đăng xuất</span>
+            </a>
+          </div>
+        </aside>
+
+        <main class="content">
+          <section class="panel queue-panel">
+            <div class="panel-header">
+              <h2>Hàng đợi bệnh nhân</h2>
+              <p>Theo dõi và lọc trạng thái khám.</p>
+            </div>
+            <div class="panel-body">
+              <div class="card">
+                <h3>Tiếp nhận bệnh nhân mới</h3>
+                <div class="form-grid">
+                  <div>
+                    <label class="form-label">Họ tên</label>
+                    <input
+                      type="text"
+                      class="input-field"
+                      id="intakeName"
+                      placeholder="Nguyễn Văn A"
+                    />
+                  </div>
+                  <div>
+                    <label class="form-label">Ngày sinh</label>
+                    <input type="date" class="input-field" id="intakeDob" />
+                  </div>
+                  <div>
+                    <label class="form-label">Giới tính</label>
+                    <select class="input-field" id="intakeGender">
+                      <option value="">Chọn giới tính</option>
+                      <option>Nữ</option>
+                      <option>Nam</option>
+                      <option>Khác</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label">CCCD / SĐT</label>
+                    <input
+                      type="text"
+                      class="input-field"
+                      id="intakeContact"
+                      placeholder="0123456789"
+                    />
+                  </div>
+                  <div>
+                    <label class="form-label">Chuyên khoa</label>
+                    <select class="input-field" id="intakeDept">
+                      <option value="">Chọn chuyên khoa</option>
+                      <option>Nội tổng quát</option>
+                      <option>Nhi</option>
+                      <option>Tim mạch</option>
+                      <option>Da liễu</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label">Loại khám</label>
+                    <select class="input-field" id="intakeVisitType">
+                      <option value="">Chọn loại khám</option>
+                      <option>BHYT</option>
+                      <option>Dịch vụ</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label">Ưu tiên</label>
+                    <label class="inline-check">
+                      <input type="checkbox" id="intakePriority" />
+                      Cấp cứu / ưu tiên
+                    </label>
+                  </div>
+                </div>
+                <button class="btn primary" id="saveIntakeBtn">
+                  Lưu hồ sơ
+                </button>
+                <div class="intake-list" id="intakeList">
+                  <div class="intake-item">
+                    <div>
+                      <strong>Trần Phương Anh</strong>
+                      <span>• Nội tổng quát</span>
+                    </div>
+                    <span class="intake-status">Mới tiếp nhận</span>
+                  </div>
+                  <div class="intake-item">
+                    <div>
+                      <strong>Đặng Minh Khoa</strong>
+                      <span>• Tim mạch</span>
+                    </div>
+                    <span class="intake-status">BHYT</span>
+                  </div>
+                </div>
+              </div>
+              <div class="input-group">
+                <span class="input-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Tìm bệnh nhân hoặc mã số..."
+                  class="input-field"
+                  id="queueSearch"
+                />
+              </div>
+              <div class="segmented">
+                <button class="segmented-btn active" data-status="all">
+                  Tất cả
+                </button>
+                <button class="segmented-btn" data-status="waiting">
+                  Đang chờ
+                </button>
+                <button class="segmented-btn" data-status="done">
+                  Đã khám
+                </button>
+              </div>
+              <div class="queue-controls">
+                <button class="btn primary" id="nextPatientBtn">
+                  Gọi bệnh nhân tiếp theo
+                </button>
+                <div class="queue-hint" id="queueHint">
+                  Ưu tiên hiển thị màu đỏ, trạng thái đang khám hiển thị màu vàng.
+                </div>
+              </div>
+              <div class="queue-list" id="queueList">
+                <article class="queue-card waiting">
+                  <div class="queue-top">
+                    <h3>Trần Ngọc Anh</h3>
+                    <span class="queue-status">WAITING</span>
+                  </div>
+                  <div class="queue-meta">
+                    <span class="badge">Q-001</span>
+                    <span class="eta">⏱ 5 phút</span>
+                  </div>
+                </article>
+                <article class="queue-card waiting priority">
+                  <div class="queue-top">
+                    <h3>Phạm Minh Khoa</h3>
+                    <span class="queue-status">WAITING</span>
+                  </div>
+                  <div class="queue-meta">
+                    <span class="badge">Q-002</span>
+                    <span class="priority-badge">Ưu tiên</span>
+                    <span class="eta">⏱ 12 phút</span>
+                  </div>
+                </article>
+                <article class="queue-card in-progress">
+                  <div class="queue-top">
+                    <h3>Lê Thảo Vy</h3>
+                    <span class="queue-status in-progress">IN_PROGRESS</span>
+                  </div>
+                  <div class="queue-meta">
+                    <span class="badge">Q-003</span>
+                    <span class="eta">⏱ Đang khám</span>
+                  </div>
+                </article>
+                <article class="queue-card done">
+                  <div class="queue-top">
+                    <h3>Nguyễn Hải Long</h3>
+                    <span class="queue-status done">DONE</span>
+                  </div>
+                  <div class="queue-meta">
+                    <span class="badge">Q-004</span>
+                    <span class="eta">✔ Hoàn tất</span>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel emr-panel">
+            <div class="stepper">
+              <div class="step is-active">
+                <div class="step-index">1</div>
+                <div>
+                  <strong>Sinh hiệu</strong>
+                  <span>Đo chỉ số cơ bản</span>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-index">2</div>
+                <div>
+                  <strong>Chẩn đoán</strong>
+                  <span>Triệu chứng & ICD-10</span>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-index">3</div>
+                <div>
+                  <strong>Chỉ định</strong>
+                  <span>Xét nghiệm & hình ảnh</span>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-index">4</div>
+                <div>
+                  <strong>Kê đơn</strong>
+                  <span>Toa thuốc điện tử</span>
+                </div>
+              </div>
+            </div>
+            <div class="patient-card">
+              <div class="patient-avatar" id="patientAvatar">NA</div>
+              <div class="patient-info">
+                <h2 id="patientName">Nguyễn Ngọc Anh</h2>
+                <div class="patient-meta">
+                  <span id="patientAge">34 tuổi</span>
+                  <span id="patientGender">Nữ</span>
+                  <span class="patient-id" id="patientId">MRN-2024-8821</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Chỉ số sinh hiệu</h3>
+              <div class="vitals-grid">
+                <div class="vital">
+                  <span class="label">Huyết áp</span>
+                  <strong id="vitalBloodPressure">120/80</strong>
+                  <span class="unit">mmHg</span>
+                </div>
+                <div class="vital">
+                  <span class="label">Nhịp tim</span>
+                  <strong id="vitalHeartRate">72</strong>
+                  <span class="unit">bpm</span>
+                </div>
+                <div class="vital">
+                  <span class="label">Nhiệt độ</span>
+                  <strong id="vitalTemperature">36.8</strong>
+                  <span class="unit">°C</span>
+                </div>
+                <div class="vital">
+                  <span class="label">SpO2</span>
+                  <strong id="vitalSpo2">98%</strong>
+                  <span class="unit">Oxygen Sat.</span>
+                </div>
+              </div>
+              <div class="vitals-form">
+                <div>
+                  <label class="form-label">Nhịp tim</label>
+                  <input type="number" class="input-field" id="inputPulse" placeholder="bpm" />
+                </div>
+                <div>
+                  <label class="form-label">Nhiệt độ</label>
+                  <input type="number" class="input-field" id="inputTemperature" placeholder="°C" step="0.1" />
+                </div>
+                <div>
+                  <label class="form-label">Cân nặng</label>
+                  <input type="number" class="input-field" id="inputWeight" placeholder="kg" step="0.1" />
+                </div>
+                <div>
+                  <label class="form-label">Chiều cao</label>
+                  <input type="number" class="input-field" id="inputHeight" placeholder="cm" step="0.1" />
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Lý do khám</h3>
+              <textarea
+                class="input-field area"
+                placeholder="Nhập lý do khám chính..."
+                id="chiefComplaint"
+              ></textarea>
+            </div>
+
+            <div class="card">
+              <h3>Chẩn đoán (ICD-10)</h3>
+              <div class="input-group">
+                <span class="input-icon">🔎</span>
+                <input
+                  type="text"
+                  class="input-field"
+                  placeholder="Tìm mã ICD-10..."
+                    id="diagnosisSearch"
+                />
+              </div>
+              <div class="suggestions">
+                <button class="suggestion">
+                  <span class="code">J06.9</span>
+                  <span class="desc">Nhiễm trùng hô hấp trên cấp</span>
+                </button>
+                <button class="suggestion">
+                  <span class="code">R50.9</span>
+                  <span class="desc">Sốt không rõ nguyên nhân</span>
+                </button>
+                <button class="suggestion">
+                  <span class="code">M79.3</span>
+                  <span class="desc">Đau cơ</span>
+                </button>
+              </div>
+              <input
+                type="text"
+                class="input-field"
+                placeholder="Chẩn đoán đã chọn"
+                  id="diagnosisSelected"
+              />
+            </div>
+
+            <div class="card">
+              <h3>Ghi chú lâm sàng</h3>
+              <textarea
+                class="input-field area tall"
+                placeholder="Nhập diễn biến, đánh giá và kế hoạch điều trị..."
+                id="clinicalNotes"
+              ></textarea>
+              <button class="btn primary" id="saveEncounterBtn">
+                Lưu hồ sơ khám
+              </button>
+            </div>
+          </section>
+
+          <section class="panel order-panel">
+            <div class="panel-header">
+              <h2>Y lệnh & toa thuốc</h2>
+              <p>Thực hiện xét nghiệm, chẩn đoán hình ảnh và kê đơn.</p>
+            </div>
+            <div class="panel-body">
+              <div class="alert-card">
+                <h3>Cảnh báo dị ứng</h3>
+                <div id="allergyList">
+                  <div class="alert-item">Penicillin</div>
+                  <div class="alert-item">Sulfa Drugs</div>
+                  <div class="alert-item">Aspirin</div>
+                </div>
+              </div>
+
+              <div class="card" id="labOrdersCard">
+                <h3>Chỉ định xét nghiệm</h3>
+                <div class="checklist">
+                  <label>
+                    <input type="checkbox" value="Công thức máu (CBC)" />
+                    Công thức máu (CBC)
+                  </label>
+                  <label>
+                    <input type="checkbox" value="Hóa sinh cơ bản" />
+                    Hóa sinh cơ bản
+                  </label>
+                  <label>
+                    <input type="checkbox" value="Chức năng gan" />
+                    Chức năng gan
+                  </label>
+                  <label>
+                    <input type="checkbox" value="Tổng phân tích nước tiểu" />
+                    Tổng phân tích nước tiểu
+                  </label>
+                </div>
+                <button class="btn primary" id="submitLabsBtn">
+                  Gửi xét nghiệm (2)
+                </button>
+              </div>
+
+              <div class="card" id="imagingOrdersCard">
+                <h3>Chẩn đoán hình ảnh</h3>
+                <div class="checklist">
+                  <label>
+                    <input type="checkbox" value="X-Quang ngực" /> X-Quang ngực
+                  </label>
+                  <label>
+                    <input type="checkbox" value="CT Scan - Head" />
+                    CT Scan - Head
+                  </label>
+                  <label>
+                    <input type="checkbox" value="MRI - Spine" /> MRI - Spine
+                  </label>
+                  <label>
+                    <input type="checkbox" value="Siêu âm tổng quát" />
+                    Siêu âm tổng quát
+                  </label>
+                </div>
+                <button class="btn primary" id="submitImagingBtn">
+                  Gửi chỉ định (1)
+                </button>
+              </div>
+
+              <div class="card">
+                <h3>Toa thuốc điện tử</h3>
+                <div class="input-group">
+                  <span class="input-icon">🔍</span>
+                  <input
+                    type="text"
+                    class="input-field"
+                    placeholder="Tìm thuốc..."
+                    id="drugSearch"
+                  />
+                </div>
+                <div class="suggestions">
+                  <button class="suggestion">Amoxicillin</button>
+                  <button class="suggestion">Ibuprofen</button>
+                  <button class="suggestion">Metformin</button>
+                </div>
+                <div class="prescription" id="prescriptionList">
+                  <div class="prescription-item">
+                    <input
+                      type="text"
+                      class="input-field"
+                      placeholder="Tên thuốc"
+                    />
+                    <div class="prescription-row">
+                      <input
+                        type="text"
+                        class="input-field"
+                        placeholder="Liều dùng"
+                      />
+                      <input
+                        type="text"
+                        class="input-field"
+                        placeholder="Số ngày"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <button class="btn dashed" id="addPrescriptionBtn">
+                  + Thêm thuốc
+                </button>
+                <button class="btn primary" id="submitPrescriptionBtn">
+                  Xuất toa thuốc
+                </button>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div class="modal" id="loginModal">
+      <div class="modal-card">
+        <h2>Đăng nhập hệ thống</h2>
+        <p>Vui lòng đăng nhập để sử dụng các chức năng.</p>
+        <div class="role-options" id="roleOptions">
+          <button class="role-option active" data-role="Bác sĩ">
+            Bác sĩ
+          </button>
+          <button class="role-option" data-role="Điều dưỡng">
+            Điều dưỡng
+          </button>
+          <button class="role-option" data-role="Lễ tân">
+            Lễ tân
+          </button>
+        </div>
+        <div class="modal-form">
+          <label>Tài khoản</label>
+          <input type="text" id="loginUsername" placeholder="doctor" />
+          <label>Mật khẩu</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" />
+          <button class="btn primary" id="loginBtn">Đăng nhập</button>
+          <div class="modal-error" id="loginError"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

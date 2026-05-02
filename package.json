@@ -1,0 +1,17 @@
+{
+  "name": "his-hospital-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "2.4.3",
+    "dotenv": "16.5.0",
+    "express": "4.19.2",
+    "mssql": "10.0.4",
+    "msnodesqlv8": "4.2.1"
+  }
+}
