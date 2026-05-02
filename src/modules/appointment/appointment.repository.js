@@ -1,4 +1,4 @@
-const { InMemoryRepository } = require('../../common/repositories/in-memory.repository');
+const { InMemoryRepository } = require('../../database/models/in-memory.repository');
 
 const appointmentRepository = new InMemoryRepository();
 

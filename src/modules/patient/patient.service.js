@@ -1,4 +1,4 @@
-const { addAuditLog } = require('../../common/audit-log');
+const { addAuditLog } = require('../../common/helpers/audit-log');
 const { AppError } = require('../../common/errors/AppError');
 const { patientRepository } = require('./patient.repository');
 

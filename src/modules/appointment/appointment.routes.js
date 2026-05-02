@@ -1,7 +1,7 @@
 const { Router } = require('express');
 
-const { asyncHandler } = require('../../common/middleware/asyncHandler');
-const { validateBody } = require('../../common/validation/validateBody');
+const { asyncHandler } = require('../../common/middlewares/asyncHandler');
+const { validateBody } = require('../../common/middlewares/validateBody');
 const { appointmentController } = require('./appointment.controller');
 const { createAppointmentSchema, updateAppointmentSchema } = require('./appointment.dto');
 

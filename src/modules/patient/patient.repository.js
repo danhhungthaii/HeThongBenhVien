@@ -1,6 +1,6 @@
-const { env } = require('../../common/config/env');
-const { InMemoryPatientRepository } = require('../../common/repositories/implementations/in-memory-patient.repository');
-const { SqlPatientRepository } = require('../../common/repositories/implementations/sql-patient.repository');
+const { env } = require('../../config/env');
+const { InMemoryPatientRepository } = require('../../database/models/implementations/in-memory-patient.repository');
+const { SqlPatientRepository } = require('../../database/models/implementations/sql-patient.repository');
 
 /**
  * Factory function to create appropriate PatientRepository
