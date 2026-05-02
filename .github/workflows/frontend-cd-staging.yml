@@ -1,0 +1,99 @@
+name: Frontend CD Staging
+
+on:
+  push:
+    branches:
+      - develop
+      - develop/**
+    paths:
+      - frontend/**
+      - .github/workflows/frontend-cd-staging.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy frontend to staging
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Check staging configuration
+        id: staging
+        env:
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_DEPLOY_PATH: ${{ secrets.STAGING_DEPLOY_PATH }}
+        run: |
+          missing=0
+
+          if [ -z "$STAGING_SSH_KEY" ]; then
+            echo "::warning::STAGING_SSH_KEY is not configured"
+            missing=1
+          fi
+
+          if [ -z "$STAGING_HOST" ]; then
+            echo "::warning::STAGING_HOST is not configured"
+            missing=1
+          fi
+
+          if [ -z "$STAGING_USER" ]; then
+            echo "::warning::STAGING_USER is not configured"
+            missing=1
+          fi
+
+          if [ -z "$STAGING_DEPLOY_PATH" ]; then
+            echo "::warning::STAGING_DEPLOY_PATH is not configured"
+            missing=1
+          fi
+
+          if [ "$missing" -ne 0 ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Staging secrets are missing, skipping deploy."
+            exit 0
+          fi
+
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
+      - name: Setup SSH key
+        if: steps.staging.outputs.configured == 'true'
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+
+      - name: Trust staging host
+        if: steps.staging.outputs.configured == 'true'
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.STAGING_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy to staging server
+        if: steps.staging.outputs.configured == 'true'
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_PORT: ${{ secrets.STAGING_PORT }}
+          STAGING_DEPLOY_PATH: ${{ secrets.STAGING_DEPLOY_PATH }}
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          ssh -p "${STAGING_PORT:-22}" "${STAGING_USER}@${STAGING_HOST}" <<EOF
+          set -e
+          cd "${STAGING_DEPLOY_PATH}"
+          git fetch origin
+          git checkout "${BRANCH_NAME}" || git checkout -b "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+          git reset --hard "origin/${BRANCH_NAME}"
+          docker compose up -d --build
+          EOF
