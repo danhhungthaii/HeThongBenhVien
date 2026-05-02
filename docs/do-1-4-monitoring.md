@@ -1,6 +1,6 @@
 # DO-1.4 - Monitoring, Logging, and Health Check
 
-Repo hiện tại chưa có source backend để gắn trực tiếp vào app, nên phần này được chuẩn bị theo dạng tài liệu triển khai và mẫu code để backend team tích hợp ngay khi có source.
+Backend hiện đã có source thật và endpoint `GET /health` được implement trong `src/app.js`, nên phần này tập trung vào cách xác nhận, giám sát và tài liệu triển khai cho team.
 
 ## Mục tiêu
 
@@ -10,7 +10,7 @@ Repo hiện tại chưa có source backend để gắn trực tiếp vào app, n
 
 ## 1) Health check endpoint
 
-Backend cần trả về trạng thái đơn giản, ví dụ:
+Backend hiện tại đã trả về trạng thái đơn giản, ví dụ:
 
 ```json
 {
@@ -19,39 +19,18 @@ Backend cần trả về trạng thái đơn giản, ví dụ:
 }
 ```
 
-### Mẫu Express route
+### Vị trí hiện tại trong code
 
-Backend team có thể thêm route này vào app Express:
-
-```js
-// src/routes/health.js
-const express = require('express');
-
-const router = express.Router();
-
-router.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-module.exports = router;
-```
-
-Gắn vào app chính:
+Endpoint đã được khai báo trực tiếp trong `src/app.js`:
 
 ```js
-// src/app.js
-const express = require('express');
-const healthRoutes = require('./routes/health');
-
-const app = express();
-
-app.use(healthRoutes);
-
-module.exports = app;
+app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 ```
+
+### Cần kiểm tra gì thêm
+
+- Mở `GET /health` trên local và staging để xác nhận trả về `200 OK`.
+- Dùng endpoint này cho Uptime Robot hoặc service monitor tương đương.
 
 ## 2) Log tập trung
 
@@ -98,13 +77,13 @@ http://<staging-ip-or-domain>/health
 
 ## 4) Checklist hoàn thành DO-1.4
 
-- [ ] Backend có endpoint `GET /health`.
-- [ ] Endpoint trả về status `ok`.
+- [x] Backend có endpoint `GET /health`.
+- [x] Endpoint trả về status `ok`.
 - [ ] Dùng được để kiểm tra trên local và staging.
 - [ ] Có cách xem log backend bằng Docker logs hoặc PM2 logs.
 - [ ] Đã cấu hình cảnh báo uptime trỏ vào `/health`.
 
 ## 5) Ghi chú cho team
 
-- File này là phần chuẩn bị cho DO-1.4 khi backend source được merge vào repo.
-- Khi có source backend thật, chỉ cần copy mẫu route ở trên vào đúng cấu trúc `src/` của project.
+- File này là phần hướng dẫn triển khai và giám sát cho DO-1.4.
+- Backend source đã có `/health` nên bước còn lại là xác nhận trên local/staging và cấu hình giám sát bên ngoài.
