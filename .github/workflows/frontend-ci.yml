@@ -1,10 +1,16 @@
 name: Frontend CI
 
 on:
+  push:
+    branches:
+      - develop/MinhDung
+    paths:
+      - frontend/**
+      - .github/workflows/frontend-ci.yml
+      - .github/workflows/frontend-cd-staging.yml
   pull_request:
     branches:
-      - develop
-      - develop/**
+      - develop/MinhDung
     paths:
       - frontend/**
       - .github/workflows/frontend-ci.yml
