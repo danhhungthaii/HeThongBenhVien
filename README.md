@@ -62,3 +62,8 @@ docker-compose logs -f redis
 - Khánh kiểm tra database.
 - Toàn kiểm tra API.
 - Thiên kiểm tra frontend trên cùng môi trường local khi source frontend đã được thêm vào.
+
+## DO-1.4 - Monitoring và Health Check
+
+- Tài liệu triển khai monitoring: [docs/do-1-4-monitoring.md](docs/do-1-4-monitoring.md)
+- Endpoint `/health` sẽ được backend team tích hợp vào source Express khi code backend được merge vào repo.
