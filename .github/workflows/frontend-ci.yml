@@ -1,0 +1,60 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - develop/**
+    paths:
+      - frontend/**
+      - .github/workflows/frontend-ci.yml
+      - .github/workflows/frontend-cd-staging.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint_and_test:
+    name: Lint and Unit Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Detect frontend project directory
+        id: project
+        run: |
+          if [ -f frontend/package.json ]; then
+            echo "dir=frontend" >> "$GITHUB_OUTPUT"
+          else
+            echo "Frontend package.json not found in frontend/." >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run ESLint
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: npm run lint
+
+      - name: Run unit tests
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: npm test -- --runInBand

@@ -1,0 +1,68 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - develop/**
+    paths:
+      - package.json
+      - package-lock.json
+      - src/**
+      - tests/**
+      - .eslintrc*
+      - jest.config.*
+      - prettier*
+      - .github/workflows/backend-ci.yml
+      - .github/workflows/backend-cd-staging.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint_and_test:
+    name: Lint and Unit Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Detect backend project directory
+        id: project
+        run: |
+          if [ -f package.json ]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          elif [ -f backend/package.json ]; then
+            echo "dir=backend" >> "$GITHUB_OUTPUT"
+          else
+            echo "Backend package.json not found at repo root or backend/." >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run ESLint
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: npm run lint
+
+      - name: Run unit tests
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: npm test -- --runInBand
