@@ -1,27 +1,24 @@
 'use strict';
-const db = require('../../config/database');
+
+// Roles not stored in separate table — derive from Users.Role column
+const { poolPromise, sql } = require('../../database/database.real');
 
 async function findRoleByName(roleName) {
-  return db.findOne('roles', r => r.role_name === roleName);
+  return { role_id: roleName, role_name: roleName };
 }
 
 async function findRoleById(roleId) {
-  return db.findOne('roles', r => r.role_id === roleId);
+  return { role_id: roleId, role_name: roleId };
 }
 
 async function getAllRoles() {
-  return db.findAll('roles');
+  const pool = await poolPromise;
+  const result = await pool.request().query(`SELECT DISTINCT Role FROM Users`);
+  return result.recordset.map(r => ({ role_id: r.Role, role_name: r.Role }));
 }
 
 async function createRole(data) {
-  const role = {
-    role_id: ++db.counters.role,
-    role_name: data.role_name,
-    description: data.description || null,
-    is_active: true,
-    created_at: new Date(),
-  };
-  return db.insert('roles', role);
+  return { role_id: data.role_name, role_name: data.role_name };
 }
 
 module.exports = { findRoleByName, findRoleById, getAllRoles, createRole };

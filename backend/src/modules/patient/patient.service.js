@@ -1,102 +1,144 @@
 'use strict';
-const db = require('../../config/database');
 
-function generatePatientId() {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const dateStr = `${yyyy}${mm}${dd}`;
-  const todayPatients = db.findMany('patients', p => p.patient_id && p.patient_id.startsWith(`BV-${dateStr}`));
-  const nextNum = String(todayPatients.length + 1).padStart(4, '0');
-  return `BV-${dateStr}-${nextNum}`;
+/**
+ * patient.service.js — SQL Server implementation
+ * Table: Patients (Patient_ID uniqueidentifier, Full_Name, Gender, Birth_Date, Phone, National_ID, Created_At)
+ */
+const { poolPromise, sql } = require('../../database/database.real');
+
+async function getPool() {
+  return poolPromise;
 }
 
 async function getPatients(filters = {}) {
-  let items = db.findAll('patients').filter(p => p.is_active !== false);
+  const pool = await getPool();
+  const req = pool.request();
+
+  let where = '1=1';
 
   if (filters.search) {
-    const q = filters.search.toLowerCase();
-    items = items.filter(p =>
-      (p.full_name && p.full_name.toLowerCase().includes(q)) ||
-      (p.phone && p.phone.includes(q)) ||
-      (p.patient_id && p.patient_id.toLowerCase().includes(q)) ||
-      (p.cccd && p.cccd.includes(q))
-    );
+    req.input('search', sql.NVarChar(100), `%${filters.search}%`);
+    where += ' AND (p.Full_Name LIKE @search OR p.Phone LIKE @search OR CAST(p.Patient_ID AS NVARCHAR(50)) LIKE @search OR p.National_ID LIKE @search)';
   }
   if (filters.gender) {
-    items = items.filter(p => p.gender === filters.gender);
-  }
-  if (filters.blood_type) {
-    items = items.filter(p => p.blood_type === filters.blood_type);
+    req.input('gender', sql.NVarChar(20), filters.gender);
+    where += ' AND p.Gender = @gender';
   }
 
-  return items;
+  const result = await req.query(`
+    SELECT p.*, pa.Allergy_Name
+    FROM Patients p
+    LEFT JOIN Patient_Allergies pa ON p.Patient_ID = pa.Patient_ID
+    WHERE ${where}
+    ORDER BY p.Created_At DESC
+  `);
+  return result.recordset.map(mapPatient);
 }
 
-async function getPatientById(pid) {
-  return db.findOne('patients', p => p.patient_id === pid && p.is_active !== false);
+async function getPatientById(patientId) {
+  const pool = await getPool();
+  const result = await pool.request()
+    .input('patientId', sql.UniqueIdentifier, patientId)
+    .query(`
+      SELECT p.*, pa.Allergy_Name
+      FROM Patients p
+      LEFT JOIN Patient_Allergies pa ON p.Patient_ID = pa.Patient_ID
+      WHERE p.Patient_ID = @patientId
+    `);
+  if (!result.recordset[0]) return null;
+  return mapPatient(result.recordset[0]);
 }
 
 async function createPatient(data) {
-  const patientId = generatePatientId();
-  const patient = {
-    patient_id: patientId,
-    full_name: data.full_name,
-    dob: data.dob || null,
-    gender: data.gender || null,
-    cccd: data.cccd || null,
-    address: data.address || null,
-    phone: data.phone || null,
-    email: data.email || null,
-    blood_type: data.blood_type || null,
-    allergy: data.allergy || null,
-    insurance_id: data.insurance_id || null,
-    insurance_expire: data.insurance_expire || null,
-    bhyt_coverage_rate: data.bhyt_coverage_rate || 0,
-    emergency_contact: data.emergency_contact || null,
-    is_active: true,
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
-  return db.insert('patients', patient);
+  const pool = await getPool();
+
+  const result = await pool.request()
+    .input('fullName', sql.NVarChar(100), data.full_name)
+    .input('gender', sql.NVarChar(20), data.gender || 'unknown')
+    .input('birthDate', sql.Date, data.dob || null)
+    .input('phone', sql.NVarChar(20), data.phone || null)
+    .input('nationalId', sql.NVarChar(30), data.cccd || data.national_id || null)
+    .query(`
+      INSERT INTO Patients (Patient_ID, Full_Name, Gender, Birth_Date, Phone, National_ID, Created_At)
+      OUTPUT INSERTED.*
+      VALUES (NEWID(), @fullName, @gender, @birthDate, @phone, @nationalId, GETDATE())
+    `);
+
+  const patient = result.recordset[0];
+
+  // Insert allergy if provided
+  if (data.allergy && patient) {
+    await pool.request()
+      .input('patientId', sql.UniqueIdentifier, patient.Patient_ID)
+      .input('allergy', sql.NVarChar(255), data.allergy)
+      .query(`INSERT INTO Patient_Allergies (Patient_ID, Allergy_Name) VALUES (@patientId, @allergy)`);
+  }
+
+  return mapPatient(patient);
 }
 
-async function updatePatient(pid, changes) {
-  const existing = await getPatientById(pid);
-  if (!existing) return null;
-  const updated = db.update('patients', p => p.patient_id === pid, changes);
-  return updated[0] || null;
+async function updatePatient(patientId, changes) {
+  const pool = await getPool();
+  const req = pool.request().input('patientId', sql.UniqueIdentifier, patientId);
+  const sets = [];
+
+  if (changes.full_name !== undefined) { req.input('fullName', sql.NVarChar(100), changes.full_name); sets.push('Full_Name = @fullName'); }
+  if (changes.gender !== undefined) { req.input('gender', sql.NVarChar(20), changes.gender); sets.push('Gender = @gender'); }
+  if (changes.dob !== undefined) { req.input('birthDate', sql.Date, changes.dob); sets.push('Birth_Date = @birthDate'); }
+  if (changes.phone !== undefined) { req.input('phone', sql.NVarChar(20), changes.phone); sets.push('Phone = @phone'); }
+  if (changes.cccd !== undefined) { req.input('nationalId', sql.NVarChar(30), changes.cccd); sets.push('National_ID = @nationalId'); }
+
+  if (sets.length === 0) return getPatientById(patientId);
+
+  await req.query(`UPDATE Patients SET ${sets.join(', ')} WHERE Patient_ID = @patientId`);
+  return getPatientById(patientId);
 }
 
-async function deletePatient(pid) {
-  return db.update('patients', p => p.patient_id === pid, { is_active: false });
+async function deletePatient(patientId) {
+  const pool = await getPool();
+  await pool.request()
+    .input('patientId', sql.UniqueIdentifier, patientId)
+    .query(`DELETE FROM Patients WHERE Patient_ID = @patientId`);
+  return { deleted: true };
 }
 
 async function findDuplicates(data) {
-  const items = db.findAll('patients').filter(p => p.is_active !== false);
-  const candidates = [];
+  const pool = await getPool();
+  const req = pool.request();
+  let where = '1=0';
+  if (data.phone) { req.input('phone', sql.NVarChar(20), data.phone); where += ' OR Phone = @phone'; }
+  if (data.cccd) { req.input('nationalId', sql.NVarChar(30), data.cccd); where += ' OR National_ID = @nationalId'; }
 
-  for (const p of items) {
-    let score = 0;
-    if (data.phone && p.phone === data.phone) score += 3;
-    if (data.cccd && p.cccd === data.cccd) score += 5;
-    if (data.dob && p.dob === data.dob) score += 2;
-    if (data.full_name && p.full_name.toLowerCase() === (data.full_name || '').toLowerCase()) score += 1;
-
-    if (score >= 2) candidates.push({ patient: p, match_score: score });
-  }
-
-  return candidates.sort((a, b) => b.match_score - a.match_score);
+  const result = await req.query(`SELECT * FROM Patients WHERE ${where}`);
+  return result.recordset.map(r => ({ patient: mapPatient(r), match_score: 3 }));
 }
 
 async function mergePatients(targetPid, sourcePid) {
-  // Mark source as merged, keep all records under target
-  await db.update('patients', p => p.patient_id === sourcePid, {
-    is_active: false,
-    patient_id: `${sourcePid} (merged into ${targetPid})`,
-  });
+  // Move queue & encounters from source to target then delete source
+  const pool = await getPool();
+  await pool.request()
+    .input('targetPid', sql.UniqueIdentifier, targetPid)
+    .input('sourcePid', sql.UniqueIdentifier, sourcePid)
+    .query(`
+      UPDATE Queue SET Patient_ID = @targetPid WHERE Patient_ID = @sourcePid;
+      UPDATE M2_Encounters SET Patient_ID = @targetPid WHERE Patient_ID = @sourcePid;
+      DELETE FROM Patients WHERE Patient_ID = @sourcePid;
+    `);
   return getPatientById(targetPid);
+}
+
+function mapPatient(row) {
+  if (!row) return null;
+  return {
+    Patient_ID: row.Patient_ID,
+    Full_Name: row.Full_Name,
+    Gender: row.Gender,
+    Birth_Date: row.Birth_Date,
+    Phone: row.Phone,
+    National_ID: row.National_ID,
+    Allergy_Name: row.Allergy_Name || null,
+    Created_At: row.Created_At,
+  };
 }
 
 module.exports = {

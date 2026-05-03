@@ -1,53 +1,61 @@
 'use strict';
-const db = require('../../config/database');
+const { poolPromise, sql } = require('../../database/database.real');
 
 async function getServices(filters = {}) {
-  let items = db.findAll('services');
+  const pool = await poolPromise;
+  const req = pool.request();
+  let where = '1=1';
 
-  if (filters.department_id) {
-    items = items.filter(s => s.department_id === parseInt(filters.department_id));
-  }
-  if (filters.category) {
-    items = items.filter(s => s.category === filters.category);
+  if (filters.search) {
+    req.input('search', sql.NVarChar(100), `%${filters.search}%`);
+    where += ' AND Drug_Name LIKE @search';
   }
   if (filters.is_bhyt !== undefined) {
-    items = items.filter(s => s.is_bhyt === (filters.is_bhyt === 'true' || filters.is_bhyt === true));
-  }
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    items = items.filter(s =>
-      s.service_name.toLowerCase().includes(q) ||
-      (s.service_code && s.service_code.toLowerCase().includes(q))
-    );
+    req.input('isBhyt', sql.Bit, filters.is_bhyt === 'true' || filters.is_bhyt === true ? 1 : 0);
+    where += ' AND Is_Insurance_Pay = @isBhyt';
   }
 
-  return items;
+  const result = await req.query(`SELECT * FROM Cat_Drugs WHERE ${where} ORDER BY Drug_Name`);
+  return result.recordset.map(r => ({
+    service_id: r.Drug_ID,
+    drug_id: r.Drug_ID,
+    service_name: r.Drug_Name,
+    drug_name: r.Drug_Name,
+    is_bhyt: r.Is_Insurance_Pay,
+    current_stock: r.Current_Stock,
+  }));
 }
 
 async function getServiceById(id) {
-  return db.findOne('services', s => s.service_id === parseInt(id));
+  const pool = await poolPromise;
+  const result = await pool.request()
+    .input('id', sql.Int, id)
+    .query(`SELECT * FROM Cat_Drugs WHERE Drug_ID = @id`);
+  if (!result.recordset[0]) return null;
+  const r = result.recordset[0];
+  return { service_id: r.Drug_ID, drug_id: r.Drug_ID, service_name: r.Drug_Name, drug_name: r.Drug_Name, is_bhyt: r.Is_Insurance_Pay, current_stock: r.Current_Stock };
 }
 
 async function createService(data) {
-  const service = {
-    service_id: ++db.counters.service,
-    service_code: data.service_code,
-    service_name: data.service_name,
-    category: data.category || null,
-    department_id: data.department_id || null,
-    base_price: data.base_price || 0,
-    bhyt_price: data.bhyt_price || 0,
-    is_bhyt: data.is_bhyt || false,
-    is_active: true,
-    created_at: new Date(),
-  };
-  return db.insert('services', service);
+  const pool = await poolPromise;
+  const result = await pool.request()
+    .input('name', sql.NVarChar(255), data.service_name || data.drug_name)
+    .input('isBhyt', sql.Bit, data.is_bhyt ? 1 : 0)
+    .input('stock', sql.Int, data.current_stock || 0)
+    .query(`INSERT INTO Cat_Drugs (Drug_Name, Is_Insurance_Pay, Current_Stock) OUTPUT INSERTED.* VALUES (@name, @isBhyt, @stock)`);
+  const r = result.recordset[0];
+  return { service_id: r.Drug_ID, drug_id: r.Drug_ID, service_name: r.Drug_Name, is_bhyt: r.Is_Insurance_Pay, current_stock: r.Current_Stock };
 }
 
 async function updateService(id, changes) {
-  const updated = db.update('services', s => s.service_id === parseInt(id), changes);
-  if (!updated.length) return null;
-  return updated[0];
+  const pool = await poolPromise;
+  const req = pool.request().input('id', sql.Int, id);
+  const sets = [];
+  if (changes.service_name || changes.drug_name) { req.input('name', sql.NVarChar(255), changes.service_name || changes.drug_name); sets.push('Drug_Name = @name'); }
+  if (changes.current_stock !== undefined) { req.input('stock', sql.Int, changes.current_stock); sets.push('Current_Stock = @stock'); }
+  if (sets.length === 0) return getServiceById(id);
+  await req.query(`UPDATE Cat_Drugs SET ${sets.join(', ')} WHERE Drug_ID = @id`);
+  return getServiceById(id);
 }
 
 module.exports = { getServices, getServiceById, createService, updateService };

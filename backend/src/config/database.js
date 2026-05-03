@@ -1,13 +1,14 @@
 'use strict';
 
+const { env } = require('./env');
+
 /**
- * Database Layer — Mock (in-memory) cho giai đoạn test.
- * Khi có SQL Server thật: xóa USE_MOCK_DB, dùng mssql từ src/config/database.real.js
+ * Database Layer
  */
-const USE_MOCK_DB = true;
+const USE_MOCK_DB = env.dbMode === 'memory';
 
 if (USE_MOCK_DB) {
   module.exports = require('../database/mockDb');
 } else {
-  module.exports = require('../database/database.real'); // chưa có — tạo khi có DB thật
+  module.exports = require('../database/database.real');
 }

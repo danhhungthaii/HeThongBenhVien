@@ -159,8 +159,9 @@ function App() {
     try {
       const response = await apiFetch(`/api/queue?status=${queueStatus}`);
       if (!response.ok) return;
-      const data = await response.json();
-      if (Array.isArray(data.items)) setQueueItems(data.items);
+      const result = await response.json();
+      const items = result.data;
+      if (Array.isArray(items)) setQueueItems(items);
     } catch {
       // Keep local demo data if API is not available.
     }
@@ -168,10 +169,11 @@ function App() {
 
   async function loadIntakes() {
     try {
-      const response = await apiFetch("/api/intakes?limit=6");
+      const response = await apiFetch("/api/queue?limit=6");
       if (!response.ok) return;
-      const data = await response.json();
-      if (Array.isArray(data.items)) setIntakeItems(data.items);
+      const result = await response.json();
+      const items = result.data;
+      if (Array.isArray(items)) setIntakeItems(items);
     } catch {
       // Keep local demo data if API is not available.
     }
@@ -211,8 +213,9 @@ function App() {
     try {
       const response = await apiFetch(`/api/allergies?patientId=${currentPatientId}`);
       if (!response.ok) return;
-      const data = await response.json();
-      if (Array.isArray(data.items)) setAllergyItems(data.items);
+      const result = await response.json();
+      const items = result.data;
+      if (Array.isArray(items)) setAllergyItems(items);
     } catch {
       // Keep local demo data if API is not available.
     }
@@ -222,9 +225,13 @@ function App() {
     try {
       const response = await apiFetch("/api/auth/me");
       if (!response.ok) return;
-      const data = await response.json();
-      if (data.user) {
-        setUser({ name: data.user.name, role: data.user.role });
+      const result = await response.json();
+      const data = result.data;
+      if (data && data.user) {
+        setUser({ 
+          name: data.user.display_name || data.user.username, 
+          role: data.user.role 
+        });
         setRole(data.user.role);
       }
     } catch {
@@ -328,18 +335,28 @@ function App() {
         return;
       }
 
-      const data = await response.json();
-      localStorage.setItem("his_token", data.token);
-      setToken(data.token);
-      if (data.user) {
-        setUser({ name: data.user.name, role: data.user.role });
-        setRole(data.user.role);
+      const result = await response.json();
+      const data = result.data; // Backend wraps in { success: true, data: ... }
+      
+      if (data && data.accessToken) {
+        localStorage.setItem("his_token", data.accessToken);
+        setToken(data.accessToken);
+        if (data.user) {
+          setUser({ 
+            name: data.user.display_name || data.user.username, 
+            role: data.user.role 
+          });
+          setRole(data.user.role);
+        } else {
+          setRole(roleChoice);
+        }
+        setLoginForm({ username: "", password: "" });
+        setQueueHint("Đăng nhập thành công.");
       } else {
-        setRole(roleChoice);
+        setLoginError("Phản hồi từ server không hợp lệ.");
       }
-      setLoginForm({ username: "", password: "" });
-      setQueueHint("Đăng nhập thành công.");
-    } catch {
+    } catch (err) {
+      console.error("Login error:", err);
       loginAsDemo();
     }
   }
@@ -364,19 +381,33 @@ function App() {
     }
 
     try {
-      const response = await apiFetch("/api/intake", {
+      const response = await apiFetch("/api/patients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullName,
-          birthDate,
-          gender,
-          contact,
-          department,
-          visitType,
-          priority,
+          full_name: fullName,
+          dob: birthDate,
+          gender: gender === "Nam" ? "male" : "female",
+          phone: contact,
         }),
       });
+
+      if (response.ok) {
+        const result = await response.json();
+        const newPatient = result.data;
+        
+        // Add to queue automatically
+        await apiFetch("/api/queue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            patient_id: newPatient.Patient_ID,
+            department: department,
+            visit_type: visitType,
+            priority: priority
+          }),
+        });
+      }
 
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
@@ -410,7 +441,7 @@ function App() {
 
   async function handleNextPatient() {
     try {
-      const response = await apiFetch("/api/queue/next", { method: "POST" });
+      const response = await apiFetch("/api/queue/call-next", { method: "POST" });
       if (!response.ok) {
         setQueueHint("Không còn bệnh nhân đang chờ.");
         return;

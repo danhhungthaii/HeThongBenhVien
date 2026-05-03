@@ -1,49 +1,45 @@
 'use strict';
-const db = require('../../config/database');
+const { poolPromise, sql } = require('../../database/database.real');
 
 async function searchIcd10(query, filters = {}) {
-  let items = db.findAll('icd10Codes');
+  const pool = await poolPromise;
+  const req = pool.request();
+  let where = '1=1';
 
   if (query) {
-    const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    items = items.filter(i =>
-      i.code.toLowerCase().includes(query) ||
-      i.description_vn.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q) ||
-      (i.description_en && i.description_en.toLowerCase().includes(q))
-    );
+    req.input('q', sql.NVarChar(100), `%${query}%`);
+    where += ' AND (ICD10_Code LIKE @q OR Disease_Name LIKE @q)';
   }
 
-  if (filters.chapter) {
-    items = items.filter(i => i.chapter === filters.chapter);
-  }
-  if (filters.is_notifiable !== undefined) {
-    items = items.filter(i => i.is_notifiable === (filters.is_notifiable === 'true'));
-  }
-
-  return items.slice(0, 50);
+  const result = await req.query(`SELECT TOP 50 * FROM Cat_ICD10 WHERE ${where} ORDER BY ICD10_Code`);
+  return result.recordset.map(r => ({
+    icd10_id: r.ICD10_Code,
+    code: r.ICD10_Code,
+    description_vn: r.Disease_Name,
+  }));
 }
 
 async function getIcd10ById(id) {
-  return db.findOne('icd10Codes', i => i.icd10_id === parseInt(id));
+  return getIcd10ByCode(id);
 }
 
 async function getIcd10ByCode(code) {
-  return db.findOne('icd10Codes', i => i.code === code);
+  const pool = await poolPromise;
+  const result = await pool.request()
+    .input('code', sql.VarChar(10), code)
+    .query(`SELECT * FROM Cat_ICD10 WHERE ICD10_Code = @code`);
+  if (!result.recordset[0]) return null;
+  const r = result.recordset[0];
+  return { icd10_id: r.ICD10_Code, code: r.ICD10_Code, description_vn: r.Disease_Name };
 }
 
 async function createIcd10(data) {
-  const existing = await getIcd10ByCode(data.code);
-  if (existing) return null;
-  const icd = {
-    icd10_id: ++db.counters.icd10,
-    code: data.code,
-    description_vn: data.description_vn,
-    description_en: data.description_en || null,
-    chapter: data.chapter || null,
-    is_notifiable: data.is_notifiable || false,
-    created_at: new Date(),
-  };
-  return db.insert('icd10Codes', icd);
+  const pool = await poolPromise;
+  await pool.request()
+    .input('code', sql.VarChar(10), data.code)
+    .input('name', sql.NVarChar(255), data.description_vn)
+    .query(`INSERT INTO Cat_ICD10 (ICD10_Code, Disease_Name) VALUES (@code, @name)`);
+  return getIcd10ByCode(data.code);
 }
 
 module.exports = { searchIcd10, getIcd10ById, getIcd10ByCode, createIcd10 };
